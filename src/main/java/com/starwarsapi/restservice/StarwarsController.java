@@ -1,6 +1,5 @@
 package com.starwarsapi.restservice;
 
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,40 +28,27 @@ public class StarwarsController {
     public String population() {
         long population = 0;
         int pageNum = 1;
-        boolean isNext = true;
 
-        while (isNext) {
+        while (true) {
             PlanetSearch planetSearch = getNextPlanetSearch(pageNum);
             population += planetSearch.results().stream()
-                    .mapToLong( p -> getValue(p.population()) )
+                    .mapToLong( Planet::getPopulationValue )
                     .sum();
-            isNext = (planetSearch.next() == null);
+            if (planetSearch.next() == null) break;
             pageNum++;
         }
 
-        String str = "Galaxy's Population of all planets: " + NumberFormat.getInstance().format(population);
-        return str;
+        return "Galaxy's Population of all planets: " + NumberFormat.getInstance().format(population);
     }
 
     private PlanetSearch getNextPlanetSearch(int pageNum) {
         return restTemplate.getForObject(PlanetSearch.NEXT_PAGE_URI + pageNum, PlanetSearch.class);
     }
 
-    private long getValue(String s) {
-        long result = 0;
-        try {
-            result = Long.parseLong(s);
-        }
-        catch ( Exception e ) {
-            System.out.println("Could not parse '" + s + "' as Long");;
-        }
-        return result;
-    }
-
     // 1st episode species types
     @GetMapping("/speciesTypes")
     @ResponseBody
-    public String species() {
+    public String speciesTypes() {
         // get the list of species from "A New Hope"
         Film film = restTemplate.getForObject(FilmSearch.SEARCH_URI + "Hope", FilmSearch.class).results().get(0);
         // TODO: Expect only 1 result; later validate or improve search keyword
@@ -80,15 +66,16 @@ public class StarwarsController {
     // Starships related to Luke Skywalker
     @GetMapping("/starships")
     @ResponseBody
-    public String starshipList() {
+    public String starships() {
         People luke = restTemplate.getForObject(People.LUKE_URI, People.class);
         String starshipNames = "";
-        for (String s : luke.starships()) {
+
+        for (String s : luke.starships())
             starshipNames += restTemplate.getForObject(s, Starship.class).name() + ", ";
-        }
-        if (starshipNames.endsWith(", ")) {
+
+        if (starshipNames.endsWith(", "))
             starshipNames = starshipNames.substring(0, starshipNames.length() - 2);
-        }
+
         return luke.name() + "'s star ships: " + starshipNames;
     }
 

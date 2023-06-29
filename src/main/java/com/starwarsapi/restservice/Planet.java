@@ -4,13 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Planet(String name, String population) {
-    @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public String population() {
-        return population;
+    public long getPopulationValue() {
+        long result = 0;
+        try {
+            result = Long.parseLong(this.population);
+        }
+        catch ( Exception e ) {
+            System.out.println("Could not parse '" + this.population + "' as Long");
+        }
+        return result;
     }
 }
